@@ -4,15 +4,16 @@ using UnityEngine;
 
 public enum PickupType
 {
-    SPEED,
-    TIME,
-    SCORE
+    SPEED = 0,
+    TIME = 1,
+    SCORE = 2
 }
 
 
 public class Pickup : Component
 {
     public PickupType mPickupType;
+    public GameObject mAssignedPlayer;
 
     public override void OnEnable()
     {
@@ -26,17 +27,17 @@ public class Pickup : Component
 
     public void PickupPower(GameObject player)
     {
-        if (!IsAvailable)
+        if (!IsAvailable && player == mAssignedPlayer)
         {
             switch (mPickupType) {
                 case PickupType.SPEED:
-                    EventHandler.ExecuteEvent("AddSpeed");
+                    EventHandler.ExecuteEvent(player,"AddSpeed");
                     break;
                 case PickupType.TIME:
-                    EventHandler.ExecuteEvent("AddTime");
+                    EventHandler.ExecuteEvent(player,"AddTime");
                     break;
                 default:
-                    EventHandler.ExecuteEvent("AddScore");
+                    EventHandler.ExecuteEvent("UpdateScore",player,50);
                     break;
 
             }

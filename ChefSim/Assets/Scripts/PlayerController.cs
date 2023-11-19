@@ -10,11 +10,9 @@ public struct Inventory
     public List<Item> mItems;
 }
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : MonoBehaviour, IComparable<PlayerController>
 {
-    [SerializeField]
-    private Tilemap MainTileMap;
-
+    
     private Vector3[] directions;
     BoxCollider2D boxCollider;
 
@@ -25,6 +23,8 @@ public class PlayerController : MonoBehaviour
     private float TotalTime = 120f;
     private float elapsedTime = 0f;
 
+    private Tilemap MainTileMap;
+
     public int Id = 0;
 
     public bool IsTimeEnded = false;
@@ -32,7 +32,6 @@ public class PlayerController : MonoBehaviour
     private void Awake()
     {
         boxCollider = GetComponent<BoxCollider2D>();
-
         elapsedTime = TotalTime;
     }
 
@@ -41,6 +40,7 @@ public class PlayerController : MonoBehaviour
         EventHandler.RegisterEvent<GameObject, int>("UpdateScore", AddScore);
         EventHandler.RegisterEvent<Vector3>(gameObject,"PlayerMove", Move);
         EventHandler.RegisterEvent(gameObject, "AddSpeed", AddSpeed);
+        EventHandler.RegisterEvent(gameObject, "AddTime", AddTime);
         EventHandler.RegisterEvent(gameObject, "Interact", Interact);
         EventHandler.RegisterEvent<Item>(gameObject, "AddPickedItem", AddInventoryItem);
         EventHandler.RegisterEvent<Item>(gameObject, "RemovePickedItem", RemoveInventoryItem);
@@ -50,6 +50,7 @@ public class PlayerController : MonoBehaviour
     {
         EventHandler.UnregisterEvent<Vector3>(gameObject, "PlayerMove", Move);
         EventHandler.UnregisterEvent(gameObject, "AddSpeed", AddSpeed);
+        EventHandler.UnregisterEvent(gameObject, "AddTime", AddTime);
         EventHandler.UnregisterEvent(gameObject, "Interact", Interact);
         EventHandler.UnregisterEvent<Item>(gameObject, "AddPickedItem", AddInventoryItem);
         EventHandler.UnregisterEvent<Item>(gameObject, "RemovePickedItem", RemoveInventoryItem);
@@ -57,7 +58,8 @@ public class PlayerController : MonoBehaviour
 
     private void Start()
     {
-        EventHandler.ExecuteEvent<GameObject>("RegisterPlayer", gameObject);
+        MainTileMap = GameManager.instance.MainTileMap;
+        EventHandler.ExecuteEvent<PlayerController>("RegisterPlayer", this);
     }
 
 
@@ -161,6 +163,11 @@ public class PlayerController : MonoBehaviour
         StartCoroutine(ActualAddSpeed(10f));
     }
 
+    private void AddTime()
+    {
+        elapsedTime += 20f;
+    }
+
     private IEnumerator ActualAddSpeed(float val)
     {
         timeToMove = 0.1f;
@@ -184,9 +191,20 @@ public class PlayerController : MonoBehaviour
             Debug.Log("Inventory is full");
             return;
         }
-        
+
         Debug.Log(item.Name + " picked item");
         mInventory.mItems.Add(item);
+        var text_mesh = GetComponentInChildren<TextMesh>();
+        for (int i = 0; i < mInventory.mItems.Count; i++)
+        {
+            if (text_mesh.text.Contains(mInventory.mItems[i].Name))
+                continue;
+            else
+            {
+                text_mesh.text = text_mesh.text.Replace("\t", string.Empty);
+                text_mesh.text += mInventory.mItems[i].Name + "\t";
+            }
+        }
     }
 
     private void RemoveInventoryItem(Item item)
@@ -194,8 +212,14 @@ public class PlayerController : MonoBehaviour
         if (mInventory.mItems == null)
             mInventory.mItems = new List<Item>();
 
-        if(mInventory.mItems.Contains(item))
+        if (mInventory.mItems.Contains(item))
+        {
+            Debug.Log("Here");
+            var text_mesh = GetComponentInChildren<TextMesh>();
+            text_mesh.text=text_mesh.text.Replace(item.Name, "");
+            text_mesh.text = text_mesh.text.Replace("\t", string.Empty);
             mInventory.mItems.Remove(item);
+        }
     }
 
     private GameObject DetectCollision()
@@ -218,5 +242,10 @@ public class PlayerController : MonoBehaviour
         }
 
         return null;
+    }
+
+    public int CompareTo(PlayerController other)
+    {
+        return Id.CompareTo(other.Id);
     }
 }

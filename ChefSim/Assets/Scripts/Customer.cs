@@ -11,14 +11,29 @@ public class Customer : Component
     int t_matched = 0;
     int p1_matched = 0 , p2_matched = 0;
     List<GameObject> players;
+    bool IsDone = false;
+
+    public GameObject slider;
 
     public override void OnEnable()
     {
         base.OnEnable();
+    }
 
-        players = GameManager.instance.GetPlayers();
-
+    public override void Start()
+    {
+        base.Start();
         GenarateCombination();
+    }
+
+    public override void Update()
+    {
+        base.Update();
+        if(!IsDone)
+        {
+            slider.transform.localScale = new Vector3(elapsedTime / TimeForAction, 1, 1);
+            slider.transform.localPosition = new Vector3(((elapsedTime / TimeForAction) - 1f)* 0.5f , 0, 0);
+        }
     }
 
     public override void CallForAction(float time)
@@ -46,6 +61,17 @@ public class Customer : Component
 
     public void CheckCombination(GameObject player)
     {
+        if (IsDone)
+            return;
+        
+        players = new List<GameObject>();
+        int length = GameManager.instance.GetPlayers().Count;
+        var plyCnts = GameManager.instance.GetPlayers();
+        for (int i = 0; i < length; i++)
+        {
+            players.Add(plyCnts[i].gameObject);
+        }
+
         if (!IsAvailable)
         {
             var ply = player.GetComponent<PlayerController>();
@@ -84,6 +110,19 @@ public class Customer : Component
                     EventHandler.ExecuteEvent<GameObject, int>("UpdateScore", players[1], 100);
                     EventHandler.ExecuteEvent<GameObject, int>("UpdateScore", players[0], 50);
                 }
+
+                if (t_matched == mItemCombination.Count && percentage > 70f)
+                {
+                    if (p1_matched > p2_matched)
+                    {
+                        EventHandler.ExecuteEvent<GameObject>("CreatePickup", players[0]);
+                    }
+                    
+                    else
+                    {
+                        EventHandler.ExecuteEvent<GameObject>("CreatePickup", players[1]);
+                    }
+                }
             }
         }
 
@@ -93,5 +132,7 @@ public class Customer : Component
             EventHandler.ExecuteEvent<GameObject, int>("UpdateScore", players[0], -50);
             EventHandler.ExecuteEvent<GameObject, int>("UpdateScore", players[1], -50);
         }
+
+        IsDone = true;
     }
 }
