@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
-    public List<GameObject> players;
+    private List<GameObject> players;
     public string[] items;
 
     public GameObject[] playerUIs;
@@ -47,6 +47,10 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public List<GameObject> GetPlayers()
+    {
+        return players;
+    }
 
     private void RegisterPlayer(GameObject player)
     {

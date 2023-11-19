@@ -9,10 +9,15 @@ public class Customer : Component
     public Dictionary<string,bool> mItemCombination;
     TextMesh[] text_meshes;
     int t_matched = 0;
+    int p1_matched = 0 , p2_matched = 0;
+    List<GameObject> players;
 
     public override void OnEnable()
     {
         base.OnEnable();
+
+        players = GameManager.instance.GetPlayers();
+
         GenarateCombination();
     }
 
@@ -43,7 +48,8 @@ public class Customer : Component
     {
         if (!IsAvailable)
         {
-            var inv = player.GetComponent<PlayerController>().mInventory;
+            var ply = player.GetComponent<PlayerController>();
+            var inv = ply.mInventory;
             var mItems = inv.mItems;
 
             for(int i = 0; i<mItems.Count; i++)
@@ -56,20 +62,36 @@ public class Customer : Component
                     text_meshes[idx].color = Color.red;
                     EventHandler.ExecuteEvent<Item>(player, "RemovePickedItem", mItems[i]);
                     t_matched++;
+
+                    if (ply.Id == 0)
+                        p1_matched++;
+                    else
+                        p2_matched++;
                 }
             }
 
             if (t_matched == mItemCombination.Count)
             {
                 Debug.Log("Customer is happy..ingredients are combined");
-                EventHandler.ExecuteEvent<GameObject, int>("UpdateScore", player, 50);
+                
+                if (p1_matched > p2_matched)
+                {
+                    EventHandler.ExecuteEvent<GameObject, int>("UpdateScore", players[0], 100);
+                    EventHandler.ExecuteEvent<GameObject, int>("UpdateScore", players[1], 50);
+                }
+                else
+                {
+                    EventHandler.ExecuteEvent<GameObject, int>("UpdateScore", players[1], 100);
+                    EventHandler.ExecuteEvent<GameObject, int>("UpdateScore", players[0], 50);
+                }
             }
         }
 
         else if(IsAvailable && t_matched < mItemCombination.Count)
         {
             Debug.Log("Customer is angry");
-            EventHandler.ExecuteEvent<GameObject, int>("UpdateScore", player, -50);
+            EventHandler.ExecuteEvent<GameObject, int>("UpdateScore", players[0], -50);
+            EventHandler.ExecuteEvent<GameObject, int>("UpdateScore", players[1], -50);
         }
     }
 }

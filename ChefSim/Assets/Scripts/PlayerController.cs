@@ -55,6 +55,11 @@ public class PlayerController : MonoBehaviour
         EventHandler.UnregisterEvent<Item>(gameObject, "RemovePickedItem", RemoveInventoryItem);
     }
 
+    private void Start()
+    {
+        EventHandler.ExecuteEvent<GameObject>("RegisterPlayer", gameObject);
+    }
+
 
     int score = 0;
     private void AddScore(GameObject player,int val)
